@@ -13,28 +13,28 @@ import Vector2d
 
 nearestPoint : Test
 nearestPoint =
-    Test.check2 "Nearest point is found correctly"
+    Test.check3 "Nearest point is found correctly"
         Random.quadraticSpline2d
         Random.point2d
-        (\spline point ->
+        Random.parameterValue
+        (\spline point randomParameterValue ->
             let
-                t =
+                computedParameterValue =
                     QuadraticSpline2d.nearestPoint spline point
 
-                pointOnSpline =
-                    QuadraticSpline2d.pointOn spline t
+                computedPoint =
+                    QuadraticSpline2d.pointOn spline computedParameterValue
 
-                displacement =
-                    Vector2d.from pointOnSpline point
+                randomPoint =
+                    QuadraticSpline2d.pointOn spline randomParameterValue
+
+                distanceToComputedPoint =
+                    Point2d.distanceFrom point computedPoint
+
+                distanceToRandomPoint =
+                    Point2d.distanceFrom point randomPoint
             in
-            case ( QuadraticSpline2d.nondegenerate spline, Vector2d.direction displacement ) of
-                ( Ok nondegenerateSpline, Just direction ) ->
-                    let
-                        tangentDirection =
-                            QuadraticSpline2d.tangentDirection nondegenerateSpline t
-                    in
-                    direction |> Expect.direction2dPerpendicularTo tangentDirection
-
-                _ ->
-                    Expect.pass
+            -- The distance to our computed 'nearest point' on the spline should definitely not be
+            -- greater than the distance to some other random point on the spline!
+            distanceToComputedPoint |> Expect.quantityAtMost distanceToRandomPoint
         )
